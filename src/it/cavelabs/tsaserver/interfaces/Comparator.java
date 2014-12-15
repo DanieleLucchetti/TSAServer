@@ -1,10 +1,24 @@
 package it.cavelabs.tsaserver.interfaces;
 
+import it.cavelabs.tsaserver.model.Comparison;
 import it.cavelabs.tsaserver.model.Result;
-import it.cavelabs.tsaserver.model.TimeSeries;
 
+/**
+ * 
+ * A method to calculate the distance between two time series
+ * 
+ * \author Lucchetti Daniele
+ * 
+ */
 public interface Comparator
 {
 
-	public Result compare(TimeSeries ts1, TimeSeries ts2);
+	/**
+	 * Calculate the distance between two TimeSeries
+	 * 
+	 * \param comparison The comparison to do
+	 * \param distanceFunction The function to calcolate the distance between two Detection
+	 * \return The distance
+	 */
+	public Result compare( Comparison comparison, DistanceFunction distanceFunction );
 }
