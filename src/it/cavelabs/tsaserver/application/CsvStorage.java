@@ -28,11 +28,12 @@ public class CsvStorage implements Storage
 	public void save( Client client, TimeSeries ts )
 	{
 		File file = new File(client.getName() + ".csv");
+		boolean exists = file.exists();
 		BufferedWriter bw = null;
 		try
 		{
-			bw = new BufferedWriter(new FileWriter(file,true));
-			if ( !file.exists() )
+			bw = new BufferedWriter(new FileWriter(file, true));
+			if ( !exists )
 			{
 				String head = "TIMESTAMP,X,Y,Z\n";
 				bw.write(head);

@@ -64,20 +64,24 @@ public class Dataset implements ActiveDataset
 			return null;
 		}
 		Set<Comparison> comparisons = new HashSet<Comparison>();
-		// Obtain the master's time series
-		TimeSeries tsMaster = this.mTimeSeries.remove(this.mMaster);
-		// If have not data about the master's time series or there is a single series of data, there are not comparison to do
-		if ( tsMaster != null && this.mTimeSeries.size() > 1 )
+		// If there is a single series of data, there are not comparison to do
+		if ( this.mTimeSeries.size() > 1 )
 		{
-			// The remains in Map are the slaves
-			Set<Client> slaves = this.mTimeSeries.keySet();
-			Iterator<Client> iterator = slaves.iterator();
-			Client currentSlave;
-			while ( iterator.hasNext() )
+			// Obtain the master's time series
+			TimeSeries tsMaster = this.mTimeSeries.remove(this.mMaster);
+			// If have not data about the master's time series, there are not comparison to do
+			if ( tsMaster != null && this.mTimeSeries.size() > 1 )
 			{
-				// Scan every slaves and add new Comparison
-				currentSlave = iterator.next();
-				comparisons.add(new Comparison(currentSlave, tsMaster, this.mTimeSeries.remove(currentSlave)));
+				// The remains in Map are the slaves
+				Set<Client> slaves = this.mTimeSeries.keySet();
+				Iterator<Client> iterator = slaves.iterator();
+				Client currentSlave;
+				while ( iterator.hasNext() )
+				{
+					// Scan every slaves and add new Comparison
+					currentSlave = iterator.next();
+					comparisons.add(new Comparison(currentSlave, tsMaster, this.mTimeSeries.remove(currentSlave)));
+				}
 			}
 		}
 		return comparisons;

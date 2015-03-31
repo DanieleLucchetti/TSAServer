@@ -19,7 +19,7 @@ public class Detection
 	 * 
 	 * \param timestamp The time of detection
 	 */
-	public Detection( int timestamp, double x, double y, double z )
+	public Detection( long timestamp, double x, double y, double z )
 	{
 		this.timestamp = timestamp;
 		this.x = x;

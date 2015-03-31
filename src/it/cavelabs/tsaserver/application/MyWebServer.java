@@ -26,7 +26,7 @@ import com.sun.net.httpserver.HttpServer;
 public class MyWebServer implements WebServer
 {
 	private HttpServer mServer;										// The HTTP server
-	private static final String hostname = "192.168.43.172";		// IP of the server
+	private String hostname = "192.168.1.6";						// IP of the server
 	private static final int port = 8000;							// The port of the server
 	private static final int bufferSize = 99999;					// Size of the buffer to get the body message 
 	private static WebServerListener mListener;						// The listener to which notify events
@@ -48,11 +48,11 @@ public class MyWebServer implements WebServer
 	{
 		try
 		{
-			mServer = HttpServer.create(new InetSocketAddress(hostname, MyWebServer.port), 0);
-			mServer.createContext("/", new MyHandler());
-			mServer.setExecutor(null);
-			mServer.start();
-			mListener = listener;
+			this.mServer = HttpServer.create(new InetSocketAddress(hostname, MyWebServer.port), 0);
+			this.mServer.createContext("/", new MyHandler());
+			this.mServer.setExecutor(null);
+			this.mServer.start();
+			this.mListener = listener;
 		} catch ( IOException e )
 		{
 			e.printStackTrace();
@@ -142,8 +142,9 @@ public class MyWebServer implements WebServer
 		 */
 		private Packet toPacket( String body )
 		{
-			Gson gson = new Gson();
-			Packet packet = gson.fromJson(body, Packet.class);
+			// Unpack the data in a Packet
+			Packet packet = new Gson().fromJson(body, Packet.class);
+			// Select the type of Packet
 			if ( packet.name != null && packet.id == 0 && packet.data == null )
 			{
 				packet.type = Packet.CONNECT_PACKET;
@@ -164,10 +165,8 @@ public class MyWebServer implements WebServer
 		/**
 		 * Get the body from the request
 		 * 
-		 * \param is
-		 * \return
-		 * \throws UnsupportedEncodingException
-		 * \throws IOException
+		 * \param is The InputStream of HTTP request
+		 * \return The body content
 		 */
 		private String getBody( InputStream is ) throws UnsupportedEncodingException, IOException
 		{
@@ -192,14 +191,16 @@ public class MyWebServer implements WebServer
 	 * 
 	 * Class that contain all information about the request arrived
 	 * 
+	 * Warning: not change the variable's name
+	 * 
 	 * \author Lucchetti Daniele
 	 * 
 	 */
 	private class Packet
 	{
-		final static int ERROR_PACKET = 1;
-		final static int CONNECT_PACKET = 2;
-		final static int DATA_PACKET = 3;
+		final static int ERROR_PACKET = 1;			// Represent a wrong packet
+		final static int CONNECT_PACKET = 2;		// Represent a packet with information to connect a new client
+		final static int DATA_PACKET = 3;			// Represent a packet with information of data of a client
 
 		int type = 0;
 		String name = null;

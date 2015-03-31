@@ -4,13 +4,13 @@ import it.cavelabs.tsaserver.interfaces.ActiveDataset;
 import it.cavelabs.tsaserver.interfaces.Comparator;
 import it.cavelabs.tsaserver.interfaces.DistanceFunction;
 import it.cavelabs.tsaserver.interfaces.Storage;
-import it.cavelabs.tsaserver.interfaces.WebServer;
 import it.cavelabs.tsaserver.interfaces.WebServerListener;
 import it.cavelabs.tsaserver.model.Client;
 import it.cavelabs.tsaserver.model.Comparison;
 import it.cavelabs.tsaserver.model.Detection;
 import it.cavelabs.tsaserver.model.Result;
 import it.cavelabs.tsaserver.model.TimeSeries;
+import it.cavelabs.tsaservertest.LogicListener;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -33,28 +33,31 @@ import com.google.gson.JsonParser;
  */
 public class Logic extends TimerTask implements WebServerListener
 {
-	private WebServer mServer;					// The server to listen the client
+	private MyWebServer mServer;				// The server to listen the client
 	private int mServerPort = 59642;			// The port when the server listen the client
 	private Map<Integer, Client> mClients;		// List of clients
 	private ActiveDataset mDataset;				// Structure to contain data that are send by client
-	private Storage mStorage;					// Method to store data
-	private List<Result> mResults;				// List of Result od Comparison
+	private Storage mStorage;					// Method to store data, null if you do not want it
+	private List<Result> mResults;				// List of Result of Comparison
 	private final static int PERIOD = 1000;		// Period to execute the check for the Comparison to do
 
-	boolean stop = false;
+	private LogicListener mListener;		// Listener of Logic //TODO remove
 
 	/**
-	 * CLunstructor
+	 * Constructor
+	 * 
+	 * \param storage The method to storage data if you want it, null otherwise
 	 */
-	public Logic()
+	public Logic( LogicListener listener, Storage storage )
 	{
 		this.mServer = new MyWebServer();
 		this.mClients = new HashMap<Integer, Client>();
 		this.mDataset = new Dataset();
-		this.mStorage = new CsvStorage();
+		setStorage(storage);
+		mListener = listener;
 		// Set the timer to remember when check for the Comparison to do
 		Timer timer = new Timer(true);
-		timer.schedule(this, PERIOD, PERIOD);
+		timer.schedule(this, PERIOD, PERIOD); 
 	}
 
 	/**
@@ -70,14 +73,27 @@ public class Logic extends TimerTask implements WebServerListener
 	 * 
 	 * \param port The port when listen the client
 	 */
-	public synchronized void startServer( int port )
+	public void startServer( int port )
 	{
 		this.mServer.start(port, this);
 	}
 
+	/**
+	 * Stop the server
+	 */
 	public void stopServer()
 	{
 		this.mServer.stop();
+	}
+
+	/**
+	 * Set the method to storage TimeSeries
+	 * 
+	 * \param storage The method or null
+	 */
+	public void setStorage( Storage storage )
+	{
+		this.mStorage = storage;
 	}
 
 	/**
@@ -86,7 +102,9 @@ public class Logic extends TimerTask implements WebServerListener
 	@Override
 	public void connect( int id, String name )
 	{
-		this.mClients.put(id, new Client(name));
+		Client client = new Client(name);
+		this.mClients.put(id, client);
+		this.mListener.registerClient(client);
 	}
 
 	/**
@@ -107,7 +125,11 @@ public class Logic extends TimerTask implements WebServerListener
 		Client client = this.mClients.get(id);
 		// The new data are inserted in ActiveDataSet and are stored
 		this.mDataset.insert(client, ts);
-		this.mStorage.save(client, ts);
+		if ( this.mStorage != null )
+		{
+			this.mStorage.save(client, ts);
+		}
+		this.mListener.receiveData(client, ts);
 	}
 
 	/**
@@ -134,7 +156,7 @@ public class Logic extends TimerTask implements WebServerListener
 			while ( iterator.hasNext() )
 			{
 				// For each Comparison a Thread is created to calculate the Result
-				new ThreadComparator(new DynamicTimeWarp(), new EuclideanDistance(), iterator.next());
+				new ThreadComparator(new DynamicTimeWarp(), new EuclideanDistance(), iterator.next()).start();
 			}
 		}
 	}
