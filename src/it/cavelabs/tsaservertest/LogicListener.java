@@ -5,6 +5,9 @@ import it.cavelabs.tsaserver.model.TimeSeries;
 
 public interface LogicListener
 {
-	public void registerClient(Client client);
-	public void receiveData(Client client, TimeSeries ts);
+	public void registerClient( Client client );
+
+	public void receiveData( Client client, TimeSeries ts );
+
+	public void disconnectClient( Client client );
 }

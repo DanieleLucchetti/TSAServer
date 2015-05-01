@@ -9,6 +9,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.Reader;
 import java.io.UnsupportedEncodingException;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 
 import com.google.gson.Gson;
@@ -26,7 +27,7 @@ import com.sun.net.httpserver.HttpServer;
 public class MyWebServer implements WebServer
 {
 	private HttpServer mServer;										// The HTTP server
-	private String hostname = "192.168.1.6";						// IP of the server
+	private String hostname = "192.168.1.4";						// IP of the server
 	private static final int port = 8000;							// The port of the server
 	private static final int bufferSize = 99999;					// Size of the buffer to get the body message 
 	private static WebServerListener mListener;						// The listener to which notify events
@@ -48,7 +49,7 @@ public class MyWebServer implements WebServer
 	{
 		try
 		{
-			this.mServer = HttpServer.create(new InetSocketAddress(hostname, MyWebServer.port), 0);
+			this.mServer = HttpServer.create(new InetSocketAddress(hostname/*InetAddress.getLocalHost().getHostAddress()*/, MyWebServer.port), 0);
 			this.mServer.createContext("/", new MyHandler());
 			this.mServer.setExecutor(null);
 			this.mServer.start();
@@ -122,6 +123,9 @@ public class MyWebServer implements WebServer
 				case Packet.DATA_PACKET:
 					mListener.receive(packet.id, packet.data.toString());
 					break;
+				case Packet.DISCONNECT_PACKET:
+					mListener.disconnect(packet.id);
+					break;
 				}
 			} else
 			{
@@ -155,7 +159,13 @@ public class MyWebServer implements WebServer
 					packet.type = Packet.DATA_PACKET;
 				} else
 				{
-					packet.type = Packet.ERROR_PACKET;
+					if ( packet.name != null && packet.id >=1 && packet.data == null )
+					{
+						packet.type = Packet.DISCONNECT_PACKET;
+					} else
+					{
+						packet.type = Packet.ERROR_PACKET;
+					}
 				}
 			}
 			System.out.println(body);
@@ -201,6 +211,7 @@ public class MyWebServer implements WebServer
 		final static int ERROR_PACKET = 1;			// Represent a wrong packet
 		final static int CONNECT_PACKET = 2;		// Represent a packet with information to connect a new client
 		final static int DATA_PACKET = 3;			// Represent a packet with information of data of a client
+		final static int DISCONNECT_PACKET = 4;		// Represent a packet to disconnect a client
 
 		int type = 0;
 		String name = null;

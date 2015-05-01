@@ -139,7 +139,7 @@ public class Logic extends TimerTask implements WebServerListener
 	public void disconnect( int id )
 	{
 		// If a Client disconnect, it is removed
-		this.mClients.remove(id);
+		this.mListener.disconnectClient(this.mClients.remove(id));
 	}
 
 	/**
